@@ -14,6 +14,7 @@
 <script>
 import NewMeetingForm from "./NewMeetingForm";
 import MeetingsList from "./MeetingsList";
+import axios from "axios";
 
 export default {
   components: {NewMeetingForm, MeetingsList},

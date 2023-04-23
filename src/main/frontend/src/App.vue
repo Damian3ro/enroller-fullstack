@@ -39,22 +39,32 @@ export default {
   },
   methods: {
     logMeIn(user) {
-      this.authenticatedUsername = user.login;
+      axios.post('/api/tokens', user)
+          .then(response => {
+            this.authenticatedUsername = user.login;
+            const token = response.data.token; //uzyskanie tokena
+            //Podanie tokena do autoryzacji:
+            axios.defaults.headers.common['Authorization'] = 'Bearer ' + token;
+            axios.get('/api/meetings').then(response => console.log(response.data));
+          })
+          .catch(response => {
+            this.userSignedUp = false;
+            this.message = 'Logowanie nieudane';
+          });
     },
     logMeOut() {
       this.authenticatedUsername = '';
+      delete axios.defaults.headers.common.Authorization;
     },
     register(user) {
       axios.post('/api/participants', user)
           .then(response => {
-            // udało się
             this.userSignedUp = true;
-            this.message = 'Udało się założyć konto.';
+            this.message = 'Udało się założyć konto :)';
           })
           .catch(response => {
-            // nie udało sie
             this.userSignedUp = false;
-            this.message = 'Nie udało się założyć konta.';
+            this.message = 'Nie udało się założyć konta :(';
           });
     }
   }
