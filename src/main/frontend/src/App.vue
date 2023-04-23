@@ -8,7 +8,14 @@
     </div>
 
     <div v-else>
-      <LoginForm @login="(user) => logMeIn(user)"></LoginForm>
+      <button :class="signingUp ? 'button-outline' : ''" @click="signingUp = false">Logowanie</button>
+      <button :class="!signingUp ? 'button-outline' : ''" @click="signingUp = true">Rejestracja</button>
+
+      <LoginForm v-if="!signingUp" @login="(user) => logMeIn(user)"></LoginForm>
+      <LoginForm v-else @login="(user) => register(user)" button-label="Załóż konto"></LoginForm>
+      <div v-if="message" :class="userSignedUp ? 'greenAlert' : 'redAlert'">
+        {{ message }}
+      </div>
     </div>
   </div>
 </template>
@@ -18,12 +25,16 @@ import "milligram";
 import LoginForm from "./LoginForm";
 import UserPanel from "./UserPanel";
 import MeetingsPage from "./meetings/MeetingsPage";
+import axios from "axios";
 
 export default {
   components: {LoginForm, MeetingsPage, UserPanel},
   data() {
     return {
+      signingUp: false,
       authenticatedUsername: '',
+      userSignedUp: false,
+      message: ''
     }
   },
   methods: {
@@ -32,14 +43,38 @@ export default {
     },
     logMeOut() {
       this.authenticatedUsername = '';
+    },
+    register(user) {
+      axios.post('/api/participants', user)
+          .then(response => {
+            // udało się
+            this.userSignedUp = true;
+            this.message = 'Udało się założyć konto.';
+          })
+          .catch(response => {
+            // nie udało sie
+            this.userSignedUp = false;
+            this.message = 'Nie udało się założyć konta.';
+          });
     }
   }
 }
 </script>
 
 <style>
-#app {
-  max-width: 1000px;
-  margin: 0 auto;
+.greenAlert {
+  padding: 5px;
+  margin: 10px;
+  color: green;
+  text-align: center;
+  font-size: 14pt;
+}
+
+.redAlert {
+  padding: 5px;
+  margin: 10px;
+  color: red;
+  text-align: center;
+  font-size: 14pt;
 }
 </style>
