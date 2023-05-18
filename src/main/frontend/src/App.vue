@@ -31,7 +31,6 @@ export default {
   components: {LoginForm, MeetingsPage, UserPanel},
   data() {
     return {
-      signingUp: false,
       authenticatedUsername: '',
       isError: false,
       message: ''
