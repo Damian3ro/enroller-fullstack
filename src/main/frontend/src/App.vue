@@ -13,7 +13,7 @@
 
       <LoginForm v-if="!signingUp" @login="(user) => logMeIn(user)"></LoginForm>
       <LoginForm v-else @login="(user) => register(user)" button-label="Załóż konto"></LoginForm>
-      <div v-if="message" :class="userSignedUp ? 'greenAlert' : 'redAlert'">
+      <div v-if="message" :class="isError ? 'redAlert' : 'greenAlert'">
         {{ message }}
       </div>
     </div>
@@ -33,58 +33,85 @@ export default {
     return {
       signingUp: false,
       authenticatedUsername: '',
-      userSignedUp: false,
+      isError: false,
       message: ''
     }
   },
+  mounted() {
+    const username = localStorage.getItem('username');
+    const token = localStorage.getItem('token');
+    if (username && token) {
+      this.storeAuth(username, token);
+      // if token expired or user has been deleted - logout!
+      axios.get('/api/meetings').catch(() => this.logMeOut());
+    }
+  },
   methods: {
-    logMeIn(user) {
-      axios.post('/api/tokens', user)
-          .then(response => {
-            this.authenticatedUsername = user.login;
-            const token = response.data.token; //uzyskanie tokena
-            //Podanie tokena do autoryzacji:
-            axios.defaults.headers.common['Authorization'] = 'Bearer ' + token;
-            axios.get('/api/meetings').then(response => console.log(response.data));
+    register(user) {
+      this.clearMessage();
+      if(user.login != null && user.password == null) {
+          this.failure(`Hasło musi zostać ustawione.`)
+      }
+      else {
+      axios.post('/api/participants', user)
+          .then(() => {
+            this.success('Konto zostało założone. Możesz się zalogować.');
+            this.signingUp = false;
           })
-          .catch(response => {
-            this.userSignedUp = false;
-            this.message = 'Logowanie nieudane';
-          });
+          .catch(error => this.failure(`Błąd przy zakładaniu konta. Kod odpowiedzi: ${error.response.status}`));
+      }
+    },
+
+    logMeIn(user) {
+      this.clearMessage();
+      axios.post('/api/tokens', user)
+          .then((response) => {
+            const token = response.data.token;
+            this.storeAuth(user.login, token);
+          })
+          .catch(() => this.failure('Logowanie nieudane.'));
     },
     logMeOut() {
       this.authenticatedUsername = '';
       delete axios.defaults.headers.common.Authorization;
+      localStorage.clear();
     },
-    register(user) {
-      axios.post('/api/participants', user)
-          .then(response => {
-            this.userSignedUp = true;
-            this.message = 'Udało się założyć konto :)';
-          })
-          .catch(response => {
-            this.userSignedUp = false;
-            this.message = 'Nie udało się założyć konta :(';
-          });
+    storeAuth(username, token) {
+      this.authenticatedUsername = username;
+      axios.defaults.headers.common['Authorization'] = 'Bearer ' + token;
+      localStorage.setItem('username', username);
+      localStorage.setItem('token', token);
+    },
+    success(message) {
+      this.message = message;
+      this.isError = false;
+    },
+    failure(message) {
+      this.message = message;
+      this.isError = true;
+    },
+    clearMessage() {
+      this.message = undefined;
     }
   }
 }
 </script>
 
-<style>
+<style scoped>
+#app {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
 .greenAlert {
-  padding: 5px;
   margin: 10px;
   color: green;
   text-align: center;
-  font-size: 14pt;
 }
 
 .redAlert {
-  padding: 5px;
   margin: 10px;
   color: red;
   text-align: center;
-  font-size: 14pt;
 }
 </style>
