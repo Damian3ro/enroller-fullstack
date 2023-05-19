@@ -1,7 +1,7 @@
 <template>
   <div>
-    <NewMeetingForm @added="addNewMeeting($event)"></NewMeetingForm>
-    <div class="error" v-if="idError">Spotkanie o podanej nazwie istnieje. Wprowadź inną nazwę</div>
+    <NewMeetingForm :meetings="meetings"
+                    @added="addNewMeeting($event)"></NewMeetingForm>
     <span v-if="meetings.length == 0">Brak zaplanowanych spotkań.</span>
     <h3 v-else>Zaplanowane zajęcia ({{ meetings.length }})</h3>
     <MeetingsList :meetings="meetings"
@@ -63,10 +63,8 @@ export default {
               meeting.id = response.data.id;
               console.log('Dodano spotkanie [' + meeting.title + ']');
               this.meetings.push(meeting);
-              this.idError = false;
           })
           .catch(() => {
-              this.idError = true;
               console.log('Spotkanie o nazwie [' + meeting.title + '] już istnieje');
           });
       console.log(meeting);
