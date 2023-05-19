@@ -6,16 +6,21 @@
     <label>Opis</label>
     <textarea v-model="newMeeting.description"></textarea>
     <button>Dodaj</button>
-    <span class="error" v-if="error">Spotkanie musi mieć nazwę!</span>
+    <span class="error" v-if="missingTitleError">Spotkanie musi mieć nazwę!</span>
+    <span class="error" v-if="duplicatedTitleError">Spotkanie o podanej nazwie istnieje. Wprowadź inną nazwę.</span>
   </form>
 </template>
 
 <script>
 export default {
+  props: {
+    meetings: Array
+  },
   data() {
     return {
       newMeeting: {participants: []},
-      error: false
+      missingTitleError: false,
+      duplicatedTitleError: false
     };
   },
   methods: {
@@ -28,13 +33,31 @@ export default {
 
       this.newMeeting.date = today;
 
-      this.error = false;
-      if (this.newMeeting.title) {
-        this.$emit('added', this.newMeeting);
-        console.log('newMeeting added: ' + this.newMeeting);
-      } else {
-        this.error = true;
+      this.duplicatedTitleError = false;
+      this.missingTitleError = false;
+      let meetingTitles = [];
+      let indexMeeting = null;
+      if(this.meetings != null) {
+          this.meetings.forEach(element => {
+            meetingTitles.push(element.title);
+          });
+          indexMeeting = meetingTitles.indexOf(this.newMeeting.title);
+          this.missingTitleError = false;
+          this.duplicatedTitleError = true;
       }
+
+      console.log('indexMeeting = ' + indexMeeting);
+      if (!this.newMeeting.title) {
+        this.duplicatedTitleError = false;
+        this.missingTitleError = true;
+      };
+      if (this.newMeeting.title && (indexMeeting == null || indexMeeting < 0)) {
+        this.$emit('added', this.newMeeting);
+        this.missingTitleError = false;
+        this.duplicatedTitleError = false;
+        this.newMeeting = {participants: []};
+        console.log('newMeeting added: ' + this.newMeeting);
+      };
     }
   }
 }

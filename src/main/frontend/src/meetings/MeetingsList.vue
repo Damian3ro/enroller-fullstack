@@ -40,6 +40,6 @@ export default {
   props: {
     meetings: Array,
     username: String
-  },
+  }
 }
 </script>
